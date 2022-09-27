@@ -1,24 +1,114 @@
-import logo from './logo.svg';
-import './App.css';
+// Header, Nav and Footer are refactored in Layout forReact Router v6
+import Home from './pages/Home'
+import NewPost from './pages/NewPost'
+import PostPage from './pages/PostPage'
+import About from './pages/About'
+import MissingPage from './pages/MissingPage'
+/*
+In react-router-dom v6+ 'Switch' is replaced w/ 'Routes'
+In react-router-dom v6+ 'useHistory' is replaced w/ 'useNavigate'
+*/
+import { Route, Routes, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+// Import date format function from date-fns
+import { format } from 'date-fns'
+import Layout from './components/Layout'
 
 function App() {
+  // Create post state using array of objects
+  const [posts, setPosts] = useState([
+    {
+      id: 1,
+      title: "My First Post",
+      datetime: "July 01, 2021 11:17:36 AM",
+      body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quis consequatur expedita, assumenda similique non optio! Modi nesciunt excepturi corrupti atque blanditiis quo nobis, non optio quae possimus illum exercitationem ipsa!"
+    },
+    {
+      id: 2,
+      title: "My 2nd Post",
+      datetime: "July 01, 2021 11:17:36 AM",
+      body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quis consequatur expedita, assumenda similique non optio! Modi nesciunt excepturi corrupti atque blanditiis quo nobis, non optio quae possimus illum exercitationem ipsa!"
+    },
+    {
+      id: 3,
+      title: "My 3rd Post",
+      datetime: "July 01, 2021 11:17:36 AM",
+      body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quis consequatur expedita, assumenda similique non optio! Modi nesciunt excepturi corrupti atque blanditiis quo nobis, non optio quae possimus illum exercitationem ipsa!"
+    },
+    {
+      id: 4,
+      title: "My Fourth Post",
+      datetime: "July 01, 2021 11:17:36 AM",
+      body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quis consequatur expedita, assumenda similique non optio! Modi nesciunt excepturi corrupti atque blanditiis quo nobis, non optio quae possimus illum exercitationem ipsa!"
+    }
+  ])
+  // Create search state
+  const [search, setSearch] = useState('')
+  // Create search results state to an empty array
+  const [searchResults, setSearchResults] = useState([])
+  // Create a history state
+  const navigate = useNavigate()
+  // Create post title state
+  const [postTitle, setPostTitle] = useState('')
+  // Create post body state
+  const [postBody, setPostBody] = useState('')
+
+  // Create use effect that runs when state of posts, and search are changed
+  useEffect(() => {
+    const filteredResults = posts.filter(post => ((post.body).toLowerCase()).includes(search.toLowerCase()) || ((post.title).toLowerCase()).includes(search.toLowerCase()))
+
+    setSearchResults(filteredResults.reverse())
+  }, [posts, search])
+
+  // Create a function to handle delete of post
+  const handleDelete = (id) => {
+    const postList = posts.filter(post => post.id !== id)
+    setPosts(postList)
+    navigate('/')
+  }
+  // Create a function to handle submit of post
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const id = posts.length ? posts[posts.length - 1].id + 1 : 1
+    const datetime = format(new Date(), 'MMMM dd, yyyy pp')
+    const newPost = { id, title: postTitle, datetime, body: postBody }
+    const allPosts = [...posts, newPost]
+    setPosts(allPosts)
+    setPostTitle('')
+    setPostBody('')
+    navigate('/')
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <Routes>
+        <Route path='/' element={<Layout 
+          search={search}
+          setSearch={setSearch}
+        />}>
+          <Route index path="/" element={
+          <Home 
+            posts={searchResults}
+          />} />
+          {/* Nested Route allowed in react router v6 */}
+          <Route path="post">
+            <Route index element={
+              <NewPost 
+                handleSubmit={handleSubmit} 
+                postTitle={postTitle}
+                setPostTitle={setPostTitle}
+                postBody={postBody}
+                setPostBody={setPostBody}
+              />} />
+            <Route path="/post/:id" element={
+              <PostPage 
+              posts={posts}
+              handleDelete={handleDelete}
+              />} />
+            </Route>
+          <Route path="about" element={<About />} />
+          <Route path="*" element={<MissingPage />} />
+        </Route>
+      </Routes>
   );
 }
 
